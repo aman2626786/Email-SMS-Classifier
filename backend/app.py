@@ -30,20 +30,23 @@ def serve_static(path):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    text = data.get('text', '')
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
 
-    if model is None or vectorizer is None:
-        return jsonify({'error': 'Model or vectorizer not loaded. Check server logs.'}), 500
+        if model is None or vectorizer is None:
+            return jsonify({'error': 'Model or vectorizer not loaded. Check server logs.'}), 500
 
-    # Vectorize
-    vect_text = vectorizer.transform([text]).toarray()
-    # Predict
-    pred = model.predict(vect_text)[0]
-    result = 'spam' if pred == 1 else 'not spam'
-    return jsonify({'prediction': result})
+        # Vectorize
+        vect_text = vectorizer.transform([text]).toarray()
+        # Predict
+        pred = model.predict(vect_text)[0]
+        result = 'spam' if pred == 1 else 'not spam'
+        return jsonify({'prediction': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
