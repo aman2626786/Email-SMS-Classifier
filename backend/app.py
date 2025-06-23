@@ -4,12 +4,21 @@ from flask_cors import CORS
 import numpy as np
 import os
 
-# Load model and vectorizer
-vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
-model = pickle.load(open('model.pkl', 'rb'))
-
 app = Flask(__name__, static_folder='../', static_url_path='')
 CORS(app)
+
+print("--- Attempting to load models from backend/ directory ---")
+try:
+    # Load model and vectorizer
+    with open('vectorizer.pkl', 'rb') as f_vect:
+        vectorizer = pickle.load(f_vect)
+    with open('model.pkl', 'rb') as f_model:
+        model = pickle.load(f_model)
+    print("--- Models loaded successfully! ---")
+except Exception as e:
+    print(f"!!! ERROR LOADING MODELS: {e} !!!")
+    vectorizer = None
+    model = None
 
 @app.route('/')
 def index():
@@ -25,6 +34,10 @@ def predict():
     text = data.get('text', '')
     if not text:
         return jsonify({'error': 'No text provided'}), 400
+
+    if model is None or vectorizer is None:
+        return jsonify({'error': 'Model or vectorizer not loaded. Check server logs.'}), 500
+
     # Vectorize
     vect_text = vectorizer.transform([text]).toarray()
     # Predict
